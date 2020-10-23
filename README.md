@@ -9,7 +9,7 @@
 - User running scripts must have sudo access
 
 ## Node_Exporter:
-Run node_exporter.sh
+Run nodeexporter.sh
 
 ## Prometheus:
 Run prometheus.sh
