@@ -51,7 +51,7 @@ sudo -u \#$PODMAN_USER -H sh -c "podman run -d -u $CONTAINER_USER --memory 1000m
 echo "Container $CONTAINER_NAME created"
 
 #Check Node Exporter Status
-if sudo -u '#1000' -H sh -c 'podman ps -a | grep Node | grep Up' 
+if sudo -u \#1000$PODMAN_USER -H sh -c 'podman ps -a | grep Node | grep Up' 
 then
 	echo "$CONTAINER_NAME looks up"
 else
@@ -65,7 +65,7 @@ then
 #Enable Systemd Selinux Permissions
 #echo "Please note selinux permissions must be enabled for systemd containers e.g sudo setsebool -P container_manage_cgroup on"
 #if the systemctl --user command 
-sudo -i -u \#1000 bash << EOF
+sudo -i -u \#$PODMAN_USER bash << EOF
 echo "Creating systemd file to ~/.config/systemd/user/container-$CONTAINER_NAME.service"
 podman generate systemd  -t 5 -n $CONTAINER_NAME >> ~/.config/systemd/user/container-$CONTAINER_NAME.service
 echo "Copied systemd file to ~/.config/systemd/user/container-$CONTAINER_NAME.service"
