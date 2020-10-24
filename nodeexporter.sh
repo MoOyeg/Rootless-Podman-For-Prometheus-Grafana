@@ -51,7 +51,7 @@ sudo -u \#$PODMAN_USER -H sh -c "podman run -d -u $CONTAINER_USER --memory 1000m
 echo "Container $CONTAINER_NAME created"
 
 #Check Node Exporter Status
-if sudo -u \#1000$PODMAN_USER -H sh -c 'podman ps -a | grep Node | grep Up' 
+if sudo -u \#$PODMAN_USER -H sh -c 'podman ps -a | grep Node | grep Up' 
 then
 	echo "$CONTAINER_NAME looks up"
 else
