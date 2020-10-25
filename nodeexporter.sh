@@ -67,7 +67,7 @@ then
 #if the systemctl --user command 
 sudo -i -u \#$PODMAN_USER bash << EOF
 echo "Creating systemd file to ~/.config/systemd/user/container-$CONTAINER_NAME.service"
-podman generate systemd  -t 5 -n $CONTAINER_NAME >> ~/.config/systemd/user/container-$CONTAINER_NAME.service
+podman generate systemd  -t 5 -n $CONTAINER_NAME > ~/.config/systemd/user/container-$CONTAINER_NAME.service
 echo "Copied systemd file to ~/.config/systemd/user/container-$CONTAINER_NAME.service"
 
 export XDG_RUNTIME_DIR="/run/user/$UID"

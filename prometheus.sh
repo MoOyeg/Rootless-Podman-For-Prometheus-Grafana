@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 #Prometheus Image
 IMAGE_LOCATION="quay.io/prometheus/prometheus:v2.21.0"
@@ -8,19 +8,23 @@ BUSYBOX_LOCATION="docker.io/library/busybox"
 PODMAN_USER="1000"
 #UID inside the container being used by process
 CONTAINER_USER="1000"
-PROMETHEUS_PORT="8081"                                                                                                                                                                                                                       CONTAINER_NAME="prometheus"
+PROMETHEUS_PORT="8081"
+CONTAINER_NAME="prometheus"
 #Create Systemd service to allow container be run as a service
 SYSTEMD_ENABLE=True
 #Create User for UID Mapping in Host for Easier Tracability
 USER_CREATE=True
 USER_NAME="prometheus"
-#Folder on Host(Must Exist) to Store Prometheus Configuration, Script will attempt to change owner to $CONTAINER_USER user host mapping
-CONFIG_FOLDER="/etc/prometheus"                                                                                                                                                                                                              #Folder on Host(Must Exist) to Store Prometheus TSDB Data, Script will attempt to change owner to $CONTAINER_USER user host mapping                                                                                                          PROMETHEUS_TSDB_STORE="/mnt/disk-nvme1/prometheus"
+#Folder on Host(Must Exist) to Store Prometheus Configuration, Script will attempt to change owner to $CONTAINER_USER user host mapping 
+CONFIG_FOLDER="/etc/prometheus"
+#Folder on Host(Must Exist) to Store Prometheus TSDB Data, Script will attempt to change owner to $CONTAINER_USER user host mapping
+PROMETHEUS_TSDB_STORE="/mnt/disk-nvme1/prometheus"
 #Location in Container to mount storage
 STORE_LOCATION="/var/www"
 #Get Sample configuration from github
 SAMPLE_CONFIGURATION="True"
-
+#Enable and Open firewall Service
+FIREWALL="True"
 
 #Script Start
 echo "Will run podman commands as USERNAME:$(id -un $PODMAN_USER) ID:$PODMAN_USER"
@@ -37,25 +41,25 @@ if [ $USER_CREATE == "True" ]
 then
    #Check if User Already Exists
    if getent passwd $uid
-   then
-           echo "User with UID $uid exists"
+   then 
+	   echo "User with UID $uid exists"
    else
-            echo "Creating User and Group with uid $uid"
-            sudo groupadd -g $uid $USER_NAME
-            sudo useradd -M -r -s /bin/false -u $uid -g $uid $USER_NAME
-            echo "Created User and Group with uid $uid"
-   fi
+	    echo "Creating User and Group with uid $uid"
+	    sudo groupadd -g $uid $USER_NAME
+	    sudo useradd -M -r -s /bin/false -u $uid -g $uid $USER_NAME 
+            echo "Created User and Group with uid $uid"	    
+   fi 
 
 fi
-
-#Change folder ownerships
+	
+#Change folder ownerships 
 echo "Changing ownership of $CONFIG_FOLDER to being owned by $USER_NAME"
-sudo chown $USER_NAME:$USER_NAME $CONFIG_FOLDER
+sudo chown $(id -un $uid):$(id -un $uid) $CONFIG_FOLDER
 echo "Changed ownership of $CONFIG_FOLDER to being owned by $USER_NAME"
 
 
 echo "Changing ownership of $PROMETHEUS_TSDB_STORE to being owned by $USER_NAME"
-sudo chown $USER_NAME:$USER_NAME $PROMETHEUS_TSDB_STORE
+sudo chown $(id -un $uid):$(id -un $uid) $PROMETHEUS_TSDB_STORE
 echo "Changed ownership of $PROMETHEUS_TSDB_STORE to being owned by $USER_NAME"
 
 #Get Sample Configuration
@@ -67,14 +71,48 @@ fi
 
 #Start Prometheus Container
 echo "Starting Container $CONTAINER_NAME"
-sudo -u \#$PODMAN_USER -H sh -c "podman run -d -u $CONTAINER_USER  --volume $CONFIG_FOLDER:/etc/prometheus --volume $PROMETHEUS_TSDB_STORE:$STORE_LOCATION:Z --expose $PROMETHEUS_PORT --network host --name prometheus --entrypoint "/bin/prometheus" quay.io/prometheus/prometheus:v2.21.0 --config.file=/etc/prometheus/prometheus.yml --web.listen-address=0.0.0.0:8080 --storage.tsdb.path /var/www"
+sudo -u \#$PODMAN_USER -H sh -c "podman run -d -u $CONTAINER_USER  --volume $CONFIG_FOLDER:/etc/prometheus --volume $PROMETHEUS_TSDB_STORE:$STORE_LOCATION:Z --expose $PROMETHEUS_PORT --network host --name $CONTAINER_NAME $IMAGE_LOCATION --config.file=$CONFIG_FOLDER/prometheus.yml --web.listen-address=0.0.0.0:$PROMETHEUS_PORT --storage.tsdb.path $STORE_LOCATION"
 echo "Container $CONTAINER_NAME created"
 
-#Check Node Exporter Status
-if sudo -u '#1000' -H sh -c 'podman ps -a | grep Node | grep Up'
+#Check Prometheus Status
+if sudo -u \#$PODMAN_USER -H sh -c 'podman ps -a | grep prometheus | grep Up' 
 then
-        echo "$CONTAINER_NAME looks up"
+	echo "$CONTAINER_NAME looks up"
 else
-        echo "$CONTAINER_NAME might be down"
+	echo "$CONTAINER_NAME might be down"
+fi
+#Create Systemd Start File
+if [ $SYSTEMD_ENABLE == "True" ]
+then
+
+	#Enable Systemd Selinux Permissions
+	#echo "Please note selinux permissions must be enabled for systemd containers e.g sudo setsebool -P container_manage_cgroup on"
+	#if the systemctl --user command 
+	sudo -i -u \#$PODMAN_USER bash << EOF
+echo "Creating systemd file to ~/.config/systemd/user/container-$CONTAINER_NAME.service"
+podman generate systemd  -t 5 -n $CONTAINER_NAME > ~/.config/systemd/user/container-$CONTAINER_NAME.service
+echo "Copied systemd file to ~/.config/systemd/user/container-$CONTAINER_NAME.service"
+export XDG_RUNTIME_DIR="/run/user/$UID"
+export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
+systemctl --user daemon-reload
+systemctl --user enable container-$CONTAINER_NAME.service
+#systemctl --user restart container-$CONTAINER_NAME.service
+EOF
+
+sudo loginctl enable-linger $(id -un $PODMAN_USER)
 fi
 
+#Enable Firewall Service and Port
+if [ $FIREWALL == "True" ]
+then
+	sudo firewall-cmd --permanent --new-service=container-$CONTAINER_NAME
+	sudo firewall-cmd --permanent --service=container-$CONTAINER_NAME --set-description="Service to run Prometheus via container-$CONTAINER_NAME, Started by User:$(id -un $PODMAN_USER)"
+	sudo firewall-cmd --permanent --service=container-$CONTAINER_NAME --set-short="container-$CONTAINER_NAME"
+	sudo firewall-cmd --permanent --service=container-$CONTAINER_NAME --add-port="$PROMETHEUS_PORT/tcp"
+	sudo firewall-cmd --zone=public --add-service=container-$CONTAINER_NAME
+	sudo firewall-cmd --zone=public --permanent --add-service=container-$CONTAINER_NAME
+	sudo firewall-cmd --zone=FedoraWorkstation --permanent --add-service=container-$CONTAINER_NAME
+	sudo firewall-cmd --zone=FedoraWorkstation --add-service=container-$CONTAINER_NAME
+	sudo firewall-cmd --reload
+fi
+echo "Complete"
