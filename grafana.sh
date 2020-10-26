@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 #Script will use buysbox location to determine process uid mapping,can be any linux container that supports proc
 BUSYBOX_LOCATION="docker.io/library/busybox"
 #FOR ROOTLESS Podman, UID podman should run container as
@@ -24,7 +24,10 @@ sudo -u \#$PODMAN_USER -H sh -c "curl -o /tmp/grafana.repo https://raw.githubuse
 sudo -u \#$PODMAN_USER -H sh -c "buildah run grafana groupadd -g $CONTAINER_USER grafana"
 sudo -u \#$PODMAN_USER -H sh -c "buildah run grafana useradd -u $CONTAINER_USER -g $CONTAINER_USER grafana"
 sudo -u \#$PODMAN_USER -H sh -c "buildah copy grafana /tmp/grafana.repo /etc/yum.repos.d/grafana.repo"
-sudo -u \#$PODMAN_USER -H sh -c "buildah run grafana yum install -y grafana"
+sudo -u \#$PODMAN_USER -H sh -c "buildah run grafana dnf update -y"
+sudo -u \#$PODMAN_USER -H sh -c "buildah run grafana dnf install -y grafana"
+sudo -u \#$PODMAN_USER -H sh -c "buildah run grafana chown $CONTAINER_USER:$CONTAINER_USER /usr/share/grafana"
+sudo -u \#$PODMAN_USER -H sh -c "buildah run grafana chown $CONTAINER_USER:$CONTAINER_USER /etc/grafana"
 sudo -u \#$PODMAN_USER -H sh -c "buildah run grafana sed -i \"s/http_port = .*/http_port = $GRAFANA_PORT/\" /etc/grafana/grafana.ini"
 sudo -u \#$PODMAN_USER -H sh -c "buildah config  --entrypoint '/usr/sbin/grafana-server --config /etc/grafana/grafana.ini --homepath /usr/share/grafana' grafana"
 sudo -u \#$PODMAN_USER -H sh -c "buildah commit --format=docker grafana $IMAGE_LOCATION"

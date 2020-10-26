@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 #Prometheus Image
 IMAGE_LOCATION="quay.io/prometheus/prometheus:v2.21.0"
