@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash -x
 
 #Prometheus Image
 IMAGE_LOCATION="quay.io/prometheus/prometheus:v2.21.0"
@@ -65,7 +65,7 @@ echo "Changed ownership of $PROMETHEUS_TSDB_STORE to being owned by $USER_NAME"
 #Get Sample Configuration
 if [ $SAMPLE_CONFIGURATION == "True" ]
 then
-   sudo -u $USER_NAME -H sh -c "curl -O https://raw.githubusercontent.com/MoOyeg/Podman-PrometheusGrafana/main/prometheus.yml > $CONFIG_FOLDER/prometheus.yml"
+   sudo -u $USER_NAME -H sh -c "curl -o $CONFIG_FOLDER/prometheus.yml https://raw.githubusercontent.com/MoOyeg/Podman-PrometheusGrafana/main/prometheus.yml"
 fi
 
 

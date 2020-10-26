@@ -20,7 +20,7 @@ FIREWALL="True"
 
 echo "Build and Commit Grafana Image via Buildah"
 sudo -u \#$PODMAN_USER -H sh -c "buildah from --name=grafana registry.fedoraproject.org/fedora:32"
-sudo -u \#$PODMAN_USER -H sh -c "curl -O https://raw.githubusercontent.com/MoOyeg/Podman-PrometheusGrafana/main/grafana.repo > /tmp/grafana.repo"
+sudo -u \#$PODMAN_USER -H sh -c "curl -o /tmp/grafana.repo https://raw.githubusercontent.com/MoOyeg/Podman-PrometheusGrafana/main/grafana.repo"
 sudo -u \#$PODMAN_USER -H sh -c "buildah run grafana groupadd -g $CONTAINER_USER grafana"
 sudo -u \#$PODMAN_USER -H sh -c "buildah run grafana useradd -u $CONTAINER_USER -g $CONTAINER_USER grafana"
 sudo -u \#$PODMAN_USER -H sh -c "buildah copy grafana /tmp/grafana.repo /etc/yum.repos.d/grafana.repo"
