@@ -7,7 +7,7 @@
 2 Shows how to use podman to generate systemd service files for node-exporter,prometheus and grafana
 3 Shows how to run node-exporter,prometheus and grafana as systemd services tied to the non-root user account(i.e systemctl --user)
 
-## Dependencies<br/>:
+## Dependencies:<br/>
 - Podman must be available
 - Podman User namespaces must be enabled
 - Access to Repos for Base Images and Files
@@ -20,10 +20,10 @@ Run nodeexporter.sh
 Run prometheus.sh
 
 ## Grafana:
-Run grafana.sh
+Run grafana.sh<br/>
 
 
-##Possible Issues:<br/>
+## Possible Issues: <br/>
 - Error: opening file `cpu.max` for writing: Permission denied: OCI runtime permission denied error<br/>
   Likely Solution - https://github.com/containers/podman/issues/7959
 
