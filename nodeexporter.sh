@@ -47,7 +47,7 @@ fi
 
 #Start Node_Exporter Container
 echo "Starting Container $CONTAINER_NAME"
-sudo -u \#$PODMAN_USER -H sh -c "podman run -d -u $CONTAINER_USER --memory 1000m --name $CONTAINER_NAME --network host --expose $EXPORTER_PORT $IMAGE_LOCATION"
+sudo -u \#$PODMAN_USER -H sh -c "podman run -d -u $CONTAINER_USER --cpus=2.0 --memory 2000m --name $CONTAINER_NAME --network host --expose $EXPORTER_PORT $IMAGE_LOCATION"
 echo "Container $CONTAINER_NAME created"
 
 #Check Node Exporter Status

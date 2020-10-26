@@ -71,7 +71,7 @@ fi
 
 #Start Prometheus Container
 echo "Starting Container $CONTAINER_NAME"
-sudo -u \#$PODMAN_USER -H sh -c "podman run -d -u $CONTAINER_USER  --volume $CONFIG_FOLDER:/etc/prometheus --volume $PROMETHEUS_TSDB_STORE:$STORE_LOCATION:Z --expose $PROMETHEUS_PORT --network host --name $CONTAINER_NAME $IMAGE_LOCATION --config.file=$CONFIG_FOLDER/prometheus.yml --web.listen-address=0.0.0.0:$PROMETHEUS_PORT --storage.tsdb.path $STORE_LOCATION"
+sudo -u \#$PODMAN_USER -H sh -c "podman run -d -u $CONTAINER_USER --cpus=2.0 --memory 2000m  --volume $CONFIG_FOLDER:/etc/prometheus --volume $PROMETHEUS_TSDB_STORE:$STORE_LOCATION:Z --expose $PROMETHEUS_PORT --network host --name $CONTAINER_NAME $IMAGE_LOCATION --config.file=$CONFIG_FOLDER/prometheus.yml --web.listen-address=0.0.0.0:$PROMETHEUS_PORT --storage.tsdb.path $STORE_LOCATION"
 echo "Container $CONTAINER_NAME created"
 
 #Check Prometheus Status
