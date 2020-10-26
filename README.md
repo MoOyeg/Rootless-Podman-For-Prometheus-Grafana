@@ -3,9 +3,9 @@
 ## Contains a set of bash scripts to enable the running and installation of Node Exporter, Prometheus and Grafana as rootless containers for Podman on Fedora 31.
 
 ## What do the scripts do<br/>
-1 Show secure examples of how to run node-exporter, prometheus and grafana as containers via podman without using the root user on the host(rootless podman) and running a non-root user inside the container and making sure that non-root user is visible outside the container as appropriate
-2 Shows how to use podman to generate systemd service files for node-exporter,prometheus and grafana
-3 Shows how to run node-exporter,prometheus and grafana as systemd services tied to the non-root user account(i.e systemctl --user)
+1 Show secure examples of how to run node-exporter, prometheus and grafana as containers via podman without using the root user on the host(rootless podman) and running a non-root user inside the container and making sure that non-root user is visible outside the container as appropriate<br/>
+2 Shows how to use podman to generate systemd service files for node-exporter,prometheus and grafana<br/>
+3 Shows how to run node-exporter,prometheus and grafana as systemd services tied to the non-root user account(i.e systemctl --user)<br/>
 
 ## Dependencies:<br/>
 - Podman must be available
