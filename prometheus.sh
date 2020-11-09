@@ -1,4 +1,6 @@
 #!/bin/bash
+#Script will use buysbox location to determine process uid mapping,can be any linux container that supports proc
+#Script uses different uids inside and outside container if you want to use the same uid use the "--userns=keep-id" flag for podman
 
 #Prometheus Image
 IMAGE_LOCATION="quay.io/prometheus/prometheus:v2.21.0"
