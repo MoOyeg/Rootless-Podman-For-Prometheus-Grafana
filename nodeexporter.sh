@@ -1,4 +1,5 @@
 #!/bin/bash 
+#Script uses different uids inside and outside container if you want to use the same uid use the "--userns=keep-id" flag for podman
 
 #Node Exporter Image
 IMAGE_LOCATION="quay.io/prometheus/node-exporter:v1.0.1"
