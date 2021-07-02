@@ -1,0 +1,19 @@
+---
+- name: User Management Starting
+  debug:
+    msg: "Starting User Management For "
+
+- name: Confirm User and Group For Node Exporter
+  become: true
+  hosts: nodexporter
+  tasks:
+    - name: Get nodexporter user info
+      getent:
+        database: passwd
+
+    - debug:
+        var: getent_passwd
+
+    - name: determine available groups
+      getent:
+        database: group

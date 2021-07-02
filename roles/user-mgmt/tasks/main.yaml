@@ -1,0 +1,74 @@
+---
+- name: Debug
+  debug:
+    msg: "Starting User Mgmt for {{ user_information }}"
+
+- name: Get group info
+  getent:
+    database: group
+    key: "{{ group_name }}"
+    split: ""
+  register: groupcheck_result
+  ignore_errors: yes
+
+- name: Debug
+  debug:
+    var: groupcheck_result
+
+- name: Check if we need to fail
+  fail:
+    msg: "We failed becasue user {{ group_name }} does not exist, and the variable for group_create is {{ group_create }}"
+  when:
+    - groupcheck_result.msg.find("not be found") != -1
+    - group_create == "false"
+
+- name: Create Group
+  group:
+    name: "{{ group_name }}"
+    gid: "{{ gid }}"
+  when:
+    - user_create == "true"
+
+- name: Get user info
+  getent:
+    database: passwd
+    key: "{{ user_name }}"
+    split: ""
+  register: usercheck_result
+  ignore_errors: yes
+
+- name: Debug
+  debug:
+    var: usercheck_result
+
+- name: Check if we need to fail
+  fail:
+    msg: "We failed becasue user {{ user_name }} does not exist, and the variable for user_create is {{ user_create }}"
+  when:
+    - usercheck_result.msg.find("not be found") != -1
+    - user_create == "false"
+
+- name: Create user
+  user:
+    name: "{{ user_name }}"
+    group: "{{ group_name }}"
+    uid: "{{ uid }}"
+  when:
+    - user_create == "true"
+# - name: set group id if not exists
+#   group:
+#     name: "{{ nodexporter_user_name }}"
+#     gid: "{{ nodexporter_podman_user }}"
+#   when:
+#     - nodexporter_user_name not in ansible_facts.getent_group
+#     - nodexporter_podman_user not in item.value
+#   loop:
+#     "{{ ansible_facts.getent_group | dict2items }}"
+# - name: set group with gid 2020 when not available
+#   group:
+#     name: tomuser
+#     gid: 2020
+#   when:
+#     - "'tomuser' not in ansible_facts.getent_group"
+#     - "'2020' not in item.value"
+#   loop: "{{ ansible_facts.getent_group | dict2items }}"

@@ -1,0 +1,13 @@
+---
+#Goal is to run a rootless nodexport container via Podman
+# Playbook will attempt to use the same user on the host for node_exporter as inside podman
+
+- name: Node Exporter Installation
+  debug:
+    msg: "Starting Node Exporter Installation"
+
+- name: Confirm Node Exporter User and Group for Host {{ item }}
+  include_tasks: "userns.yaml"
+  vars:
+    host: { { item } }
+  with_items: "{{ groups['local_vm'] }}"
