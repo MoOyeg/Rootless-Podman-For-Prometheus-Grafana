@@ -1,0 +1,44 @@
+---
+- name: Debug
+  debug:
+    msg: "Starting User Mgmt for {{ user_information }}"
+
+- name: Get user info
+  getent:
+    database: passwd
+    key: "{{ user_name }}"
+    split: ":"
+  register: usercheck_result
+  ignore_errors: yes
+
+- name: Delete user
+  user:
+    name: "{{ user_name }}"
+    group: "{{ group_name }}"
+    uid: "{{ uid }}"
+    state: absent
+  when:
+    - not usercheck_result.failed  
+
+- name: Get group info
+  getent:
+    database: group
+    key: "{{ group_name }}"
+    split: ":"
+  register: groupcheck_result
+  ignore_errors: yes
+
+- name: Debug
+  debug:
+    var: groupcheck_result.failed
+
+- name: Delete Group
+  group:
+    name: "{{ group_name }}"
+    gid: "{{ gid }}"
+    state: absent
+  when:
+    - not groupcheck_result.failed
+
+
+

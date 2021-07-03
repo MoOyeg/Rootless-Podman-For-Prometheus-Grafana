@@ -2,19 +2,22 @@
 all:
   children:
     nodexporter:
-      hosts: localhost
-    prometheus:
-      hosts: localhost
+      hosts: lb-rhv.cluster1.homelab.lan
       vars:
         nodexporter_image_location: "quay.io/prometheus/node-exporter:v1.0.1"
         nodexporter_busybox_location: "docker.io/library/busybox"
-        nodexporter_podman_user: "1000"
+        #ROOTLESS Podman, UID podman should run container as
+        nodexporter_podman_user: "1001"
+        #UID inside the container being used by process
         nodexporter_container_user: "1001"
         nodexporter_exporter_port: "9100"
         nodexporter_container_name: "node-exporter"
         nodexporter_systemd_enable: "true"
         nodexporter_user_create: "true"
         nodexporter_user_name: "node-exporter"
-        nodexporter_firewall=: "true"
-    testhosts:
+        nodexporter_firewall: "true"
+        nodexporter_network: "host"
+        nodexporter_cpus: "2.0"
+        nodexporter_memory: "2000m"
+    prometheus:
       hosts: lb-rhv.cluster1.homelab.lan
