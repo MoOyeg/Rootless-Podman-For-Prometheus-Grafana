@@ -1,5 +1,6 @@
 ---
 - name: Podman Installation
+  become: true
   hosts:
     - nodeexporter
     - prometheus

@@ -1,8 +1,9 @@
 ---
 all:
   children:
-    nodexporter:
-      hosts: lb-rhv.cluster1.homelab.lan
+    nodeexporter:
+      hosts:
+        lb-rhv.cluster1.homelab.lan:
       vars:
         nodexporter_image_location: "quay.io/prometheus/node-exporter:v1.0.1"
         nodexporter_busybox_location: "docker.io/library/busybox"
@@ -20,4 +21,8 @@ all:
         nodexporter_cpus: "2.0"
         nodexporter_memory: "2000m"
     prometheus:
-      hosts: lb-rhv.cluster1.homelab.lan
+      hosts:
+        lb-rhv.cluster1.homelab.lan:
+    grafana:
+      hosts:
+        lb-rhv.cluster1.homelab.lan:
