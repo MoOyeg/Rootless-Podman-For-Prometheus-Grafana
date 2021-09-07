@@ -81,7 +81,7 @@ fi
 if [ $SYSTEMD_ENABLE == "True" ]
 then
 
- #Chekck is systemd folder exists
+   #Check if systemd folder exists
 	dir_exists "/home/$PODMAN_USERNAME/.config/systemd/user/"
 
 #Enable Systemd Selinux Permissions
