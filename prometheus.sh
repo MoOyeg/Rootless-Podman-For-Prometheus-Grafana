@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 #Script will use buysbox location to determine process uid mapping,can be any linux container that supports proc
 #Script uses different uids inside and outside container if you want to use the same uid use the "--userns=keep-id" flag for podman
 
@@ -111,8 +111,9 @@ fi
 #Create Systemd Start File
 if [ $SYSTEMD_ENABLE == "True" ]
 then
-    #Check if systemd folder exists
-    dir_exists "/home/$PODMAN_USERNAME/.config/systemd/user/"
+   
+  #Check if systemd folder exists and create if not
+  [ ! -d "/home/$PODMAN_USERNAME/.config/systemd/user/" ] && sudo -u \#$PODMAN_USER -H sh -c "mkdir -p /home/$PODMAN_USERNAME/.config/systemd/user/"
 
 	#Enable Systemd Selinux Permissions
 	#echo "Please note selinux permissions must be enabled for systemd containers e.g sudo setsebool -P container_manage_cgroup on"
@@ -121,13 +122,14 @@ then
     echo "Creating systemd file to /home/$PODMAN_USERNAME/.config/systemd/user/container-$CONTAINER_NAME.service"
     podman generate systemd  -t 5 -n $CONTAINER_NAME > /home/$PODMAN_USERNAME/.config/systemd/user/container-$CONTAINER_NAME.service
     echo "Copied systemd file to /home/$PODMAN_USERNAME/.config/systemd/user/container-$CONTAINER_NAME.service"
-    export XDG_RUNTIME_DIR="/run/user/$UID"
-    export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
-    systemctl --user daemon-reload
-    systemctl --user enable container-$CONTAINER_NAME.service
-    #systemctl --user restart container-$CONTAINER_NAME.service
+    sleep 5 
 EOF
 
+#Enable and Restart Container Services
+sudo machinectl shell --uid=$PODMAN_USERNAME .host /usr/bin/systemctl --user daemon-reload
+sudo machinectl shell --uid=$PODMAN_USERNAME .host /usr/bin/systemctl --user enable container-$CONTAINER_NAME.service
+sudo machinectl shell --uid=$PODMAN_USERNAME .host /usr/bin/systemctl --user stop container-$CONTAINER_NAME.service
+sudo machinectl shell --uid=$PODMAN_USERNAME .host /usr/bin/systemctl --user restart container-$CONTAINER_NAME.service
 sudo loginctl enable-linger $(id -un $PODMAN_USER)
 fi
 

@@ -105,8 +105,9 @@ fi
 if [ $SYSTEMD_ENABLE == "True" ]
 then
 
-  #Check if systemd folder exists
-  dir_exists "/home/$PODMAN_USERNAME/.config/systemd/user/"
+  
+  #Check if systemd folder exists and create if not
+  [ ! -d "/home/$PODMAN_USERNAME/.config/systemd/user/" ] && sudo -u \#$PODMAN_USER -H sh -c "mkdir -p /home/$PODMAN_USERNAME/.config/systemd/user/"
 
   #Enable Systemd Selinux Permissions
   #echo "Please note selinux permissions must be enabled for systemd containers e.g sudo setsebool -P container_manage_cgroup on"
@@ -118,11 +119,15 @@ then
     export XDG_RUNTIME_DIR="/run/user/$UID"
     export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
     systemctl --user daemon-reload
-    systemctl --user enable container-$CONTAINER_NAME.service
-    #systemctl --user restart container-$CONTAINER_NAME.service
+    sleep 5
 EOF
-
-  sudo loginctl enable-linger $(id -un $PODMAN_USER)
+   
+#Enable and Restart Container Services
+sudo machinectl shell --uid=$PODMAN_USERNAME .host /usr/bin/systemctl --user daemon-reload
+sudo machinectl shell --uid=$PODMAN_USERNAME .host /usr/bin/systemctl --user enable container-$CONTAINER_NAME.service
+sudo machinectl shell --uid=$PODMAN_USERNAME .host /usr/bin/systemctl --user stop container-$CONTAINER_NAME.service
+sudo machinectl shell --uid=$PODMAN_USERNAME .host /usr/bin/systemctl --user restart container-$CONTAINER_NAME.service
+sudo loginctl enable-linger $(id -un $PODMAN_USER)
 fi
 
 #Enable Firewall Service and Port
