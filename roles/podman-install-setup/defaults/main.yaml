@@ -1,0 +1,16 @@
+debian_podman_dependencies_rootless:
+  - fuse-overlayfs
+  - slirp4netns
+  - uidmap
+  - libglib2.0-dev
+  - libslirp-dev
+  - libcap-dev
+  - libseccomp-dev
+
+redhat_podman_dependencies_rootless:
+  - slirp4netns
+  - uidmap
+  - glib2-devel
+  - libslirp-devel
+  - libcap-devel
+  - libseccomp-devel

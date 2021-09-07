@@ -1,0 +1,51 @@
+---
+#Some Code in this file from: https://github.com/ikke-t/podman-container-systemd/blob/master/tasks/main.yml
+
+- name: Check for user namespace support in kernel
+  stat:
+    path: /proc/sys/kernel/unprivileged_userns_clone
+  register: unprivileged_userns_clone
+  changed_when: false
+
+- name: Allow unprivileged users on Debian
+  sysctl:
+    name: kernel.unprivileged_userns_clone
+    value: "1"
+    state: present
+    sysctl_file: /etc/sysctl.d/userns.conf
+    sysctl_set: true
+  when:
+    - ansible_distribution == 'Debian'
+    - unprivileged_userns_clone.stat.exists
+
+#TODO - Convert user_id to user_name
+
+- name: Install rootless dependencies on Debian-based
+  package:
+    name: "{{ debian_podman_dependencies_rootless }}"
+    state: present
+  when:
+    - ansible_os_family == 'Debian'
+    - nodexporter_container_user != 'root'
+
+- name: Update Cache for RedHat-based
+  yum:
+    name: "*"
+    update_cache: "yes"
+  when:
+    - ansible_os_family == 'RedHat'
+    - nodexporter_container_user != 'root'
+
+- name: Install rootless dependencies on RedHat-based
+  package:
+    name: "{{ redhat_podman_dependencies_rootless }}"
+    state: present
+  when:
+    - ansible_os_family == 'RedHat'
+    - nodexporter_container_user != 'root'
+
+- name: ensure podman is installed
+  package:
+    name: podman
+    state: present
+  when: not skip_podman_install

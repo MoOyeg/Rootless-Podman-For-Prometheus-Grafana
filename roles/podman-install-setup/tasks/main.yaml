@@ -1,0 +1,16 @@
+---
+- name: Determine if Create is Required
+  include_tasks:
+    file: create.yaml
+    apply:
+      tags:
+        - user_create
+  when: role_usage == "create"
+
+- name: Determine if Delete is Required
+  include_tasks:
+    file: delete.yaml
+    apply:
+      tags:
+        - user_delete
+  when: role_usage == "delete"

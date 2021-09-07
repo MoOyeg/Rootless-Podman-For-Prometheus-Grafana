@@ -1,0 +1,60 @@
+---
+- name: Podman Installation
+  become: true
+  hosts:
+    - nodeexporter
+    - prometheus
+    - grafana
+  tasks:
+    - name: Podman Installation
+      debug:
+        msg: "Will Attempt to Install Podman"
+      tags:
+        - podman-install
+
+    - name: Node Exporter User Management
+      vars:
+        user_information: podman
+        role_usage: create
+      include_role:
+        name: podman-install-setup
+      tags:
+        - podman-install
+
+- name: Node Exporter Installation
+  hosts: nodexporter
+  tasks:
+    - name: Node Exporter Installation
+      debug:
+        msg: "Node Exporter Installation will confirm users, resources and start installation"
+      tags:
+        - nodexporter-install
+
+    - name: Node Exporter User Management
+      vars:
+        user_information: node_exporter
+        role_usage: create
+        user_name: "{{ nodexporter_user_name }}"
+        group_name: "{{ nodexporter_user_name }}"
+        uid: "{{ nodexporter_podman_user }}"
+        gid: "{{ nodexporter_podman_user }}"
+        user_create: "{{ nodexporter_user_create }}"
+        group_create: "{{ nodexporter_user_create }}"
+      include_role:
+        name: user-mgmt
+      tags:
+        - nodexporter-install
+        - nodexporter-usermgmt
+
+    - name: Podman create Node Exporter Container
+      vars:
+        role_usage: create
+      include_role:
+        name: podman-node-exporter
+      tags:
+        - nodexporter-install
+        - nodexporter-podman-create
+# - name: Install Node Exporter
+#   hosts: nodexporter
+#   roles:
+#     - role: podman-node-exporter

@@ -1,0 +1,16 @@
+---
+- name: Node Exporter Container Deletion
+  debug:
+    msg: "Starting Node Exporter Container Delete"
+
+- name: Run Podman Container
+  containers.podman.podman_container:
+    name: "{{ nodexporter_container_name }}"
+    image: "{{ nodexporter_image_location }}"
+    state: absent
+    user: "{{ nodexporter_podman_user }}"
+    userns: keep-id
+    recreate: yes
+    network: "{{ nodexporter_network }}"
+    expose:
+      - "{{ nodexporter_exporter_port }}"

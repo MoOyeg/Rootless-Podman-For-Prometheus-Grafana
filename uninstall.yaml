@@ -1,0 +1,34 @@
+---
+- name: Node Exporter Removal
+  hosts: nodexporter
+  tasks:
+    - name: Node Exporter Removal
+      debug:
+        msg: "Node Exporter Installation will confirm users, resources and start installation"
+      tags:
+        - nodexporter-uninstall
+
+    - name: Node Exporter User Management
+      vars:
+        user_information: node_exporter
+        role_usage: delete
+        user_name: "{{ nodexporter_user_name }}"
+        group_name: "{{ nodexporter_user_name }}"
+        uid: "{{ nodexporter_podman_user }}"
+        gid: "{{ nodexporter_podman_user }}"
+        user_create: "{{ nodexporter_user_create }}"
+        group_create: "{{ nodexporter_user_create }}"
+      include_role:
+        name: user-mgmt
+      tags:
+        - nodexporter-uninstall
+        - nodexporter-usermgmt
+
+    - name: Podman Delete Node Exporter Container
+      vars:
+        role_usage: delete
+      include_role:
+        name: podman-node-exporter
+      tags:
+        - nodexporter-uninstall
+        - nodexporter-podman-delete

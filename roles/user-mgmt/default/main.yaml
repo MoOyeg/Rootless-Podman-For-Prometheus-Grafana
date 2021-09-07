@@ -1,0 +1,7 @@
+user_information: unknown
+role_usage: create
+nodexporter_firewall: "true"
+nodexporter_network: "host"
+nodexporter_cpus: "2.0"
+nodexporter_memory: "2000m"
+nodexporter_network: "host"

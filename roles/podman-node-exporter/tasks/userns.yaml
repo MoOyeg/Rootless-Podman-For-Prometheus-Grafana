@@ -1,0 +1,87 @@
+---
+- name: Confirm User and Group For
+  become: true
+  tasks:
+    - name: determine available groups
+      getent:
+        database: group
+
+    - name: determine available users
+      getent:
+        database: passwd
+
+    - name: set group with gid 1900 when not available
+      group:
+        name: tomuser
+        gid: 1900
+      when:
+        - "'tomuser' not in ansible_facts.getent_group"
+        - "'1900' not in item.value"
+      loop: "{{ ansible_facts.getent_group | dict2items }}"
+
+    - name: set group with gid 2020 when not available
+      group:
+        name: tomuser
+        gid: 2020
+      when:
+        - "'tomuser' not in ansible_facts.getent_group"
+        - "'2020' not in item.value"
+      loop: "{{ ansible_facts.getent_group | dict2items }}"
+
+    - name: create random number
+      set_fact:
+        random_num: "{{ range(1500, 2000) | random(seed=item) }}"
+      run_once: yes
+      with_items:
+        - string
+
+    - name: set group with random gid when 2020 already in use
+      group:
+        name: tomuser
+        gid: "{{ random_num }}"
+      when:
+        - "'tomuser' not in ansible_facts.getent_group"
+        - "'2020' in item.value"
+      loop: "{{ ansible_facts.getent_group | dict2items }}"
+
+    - name: set fact when tomuser exists
+      set_fact:
+        user_exists: true
+      when: '"tomuser" in item.key'
+      loop: "{{ ansible_facts.getent_passwd | dict2items }}"
+
+    - name: set fact when tomuser does not exists
+      set_fact:
+        user_exists: false
+      when: '"tomuser" not in item.key'
+      loop: "{{ ansible_facts.getent_passwd | dict2items }}"
+
+    - name: set user with uid 1900, and group tomuser when not available
+      user:
+        name: tomuser
+        uid: 1900
+        group: tomuser
+      when:
+        - not user_exists
+        - "'1900' not in item.value[1]"
+      loop: "{{ ansible_facts.getent_passwd | dict2items }}"
+
+    - name: set user with uid 2020, and group tomuser when not available
+      user:
+        name: tomuser
+        uid: 2020
+        group: tomuser
+      when:
+        - not user_exists
+        - "'2020' not in item.value[1]"
+      loop: "{{ ansible_facts.getent_passwd | dict2items }}"
+
+    - name: set user with random uid, and group tomuser when not available
+      user:
+        name: tomuser
+        uid: "{{ random_num }}"
+        group: tomuser
+      when:
+        - not user_exists
+        - "'2020' in item.value[1]"
+      loop: "{{ ansible_facts.getent_passwd | dict2items }}"

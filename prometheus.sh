@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/bin/bash -x
 #Script will use buysbox location to determine process uid mapping,can be any linux container that supports proc
 #Script uses different uids inside and outside container if you want to use the same uid use the "--userns=keep-id" flag for podman
+
 
 #Prometheus Image
 IMAGE_LOCATION="quay.io/prometheus/prometheus:v2.21.0"
@@ -20,7 +21,7 @@ USER_NAME="prometheus"
 #Folder on Host(Must Exist) to Store Prometheus Configuration, Script will attempt to change owner to $CONTAINER_USER user host mapping 
 CONFIG_FOLDER="/etc/prometheus"
 #Folder on Host(Must Exist) to Store Prometheus TSDB Data, Script will attempt to change owner to $CONTAINER_USER user host mapping
-PROMETHEUS_TSDB_STORE="/mnt/disk-nvme1/prometheus"
+PROMETHEUS_TSDB_STORE="/tmp/prometheus"
 #Location in Container to mount storage
 STORE_LOCATION="/var/www"
 #Get Sample configuration from github
@@ -28,14 +29,35 @@ SAMPLE_CONFIGURATION="True"
 #Enable and Open firewall Service
 FIREWALL="True"
 
-#Script Start
-echo "Will run podman commands as USERNAME:$(id -un $PODMAN_USER) ID:$PODMAN_USER"
+### Functions ####
+
+#Function to Check if folder exists and try to create it
+dir_exists() {
+  [ -d $1 ] && echo "Directory $1 exists." || ( mkdir -p $1 || ( echo "Error: Directory $1 does not exist or Could not be created."))
+
+  [ ! -d $1 ] && exit 1
+
+}
+
+#Check if Container exists and delete it if it does
+container_exists() {
+  container_id=$(sudo -u \#$PODMAN_USER -H sh -c "podman ps -a --filter \"name=$CONTAINER_NAME\" --quiet")
+  [ -n $container_id ] && (sudo -u \#$PODMAN_USER -H sh -c "podman kill $container_id; podman rm $container_id")
+}
+
+
+####  Script Start #####
+PODMAN_USERNAME=$(id -un $PODMAN_USER)
+echo "Will run podman commands as USERNAME:$PODMAN_USERNAME ID:$PODMAN_USER"
+
 
 #Get UID Mapping inside Container Process
 echo "Obtaining User Namespace UID Mapping"
-outputline=$(sudo -u \#$PODMAN_USER -H sh -c "podman run -u 1001 busybox cat /proc/self/uid_map | tail -n 1")
+outputline=$(sudo -u \#$PODMAN_USER -H sh -c "podman run -u 1001 $BUSYBOX_LOCATION cat /proc/self/uid_map | tail -n 1")
 outputarray=($outputline)
 uid=$(( $CONTAINER_USER + ${outputarray[1]}-${outputarray[0]} ))
+
+
 
 #Creating User for UID
 echo "User $CONTAINER_USER will be available as UID $uid on your host, make sure to change ownership of any required folders to that"
@@ -55,6 +77,8 @@ then
 fi
 	
 #Change folder ownerships 
+dir_exists $CONFIG_FOLDER
+dir_exists $PROMETHEUS_TSDB_STORE
 echo "Changing ownership of $CONFIG_FOLDER to being owned by $USER_NAME"
 sudo chown $(id -un $uid):$(id -un $uid) $CONFIG_FOLDER
 echo "Changed ownership of $CONFIG_FOLDER to being owned by $USER_NAME"
@@ -72,6 +96,7 @@ fi
 
 
 #Start Prometheus Container
+container_exists
 echo "Starting Container $CONTAINER_NAME"
 sudo -u \#$PODMAN_USER -H sh -c "podman run -d -u $CONTAINER_USER --cpus=2.0 --memory 2000m  --volume $CONFIG_FOLDER:/etc/prometheus --volume $PROMETHEUS_TSDB_STORE:$STORE_LOCATION:Z --expose $PROMETHEUS_PORT --network host --name $CONTAINER_NAME $IMAGE_LOCATION --config.file=$CONFIG_FOLDER/prometheus.yml --web.listen-address=0.0.0.0:$PROMETHEUS_PORT --storage.tsdb.path $STORE_LOCATION"
 echo "Container $CONTAINER_NAME created"
@@ -86,19 +111,21 @@ fi
 #Create Systemd Start File
 if [ $SYSTEMD_ENABLE == "True" ]
 then
+    #Chekck is systemd folder exists
+	dir_exists "/home/$PODMAN_USERNAME/.config/systemd/user/"
 
 	#Enable Systemd Selinux Permissions
 	#echo "Please note selinux permissions must be enabled for systemd containers e.g sudo setsebool -P container_manage_cgroup on"
 	#if the systemctl --user command 
 	sudo -i -u \#$PODMAN_USER bash << EOF
-echo "Creating systemd file to ~/.config/systemd/user/container-$CONTAINER_NAME.service"
-podman generate systemd  -t 5 -n $CONTAINER_NAME > ~/.config/systemd/user/container-$CONTAINER_NAME.service
-echo "Copied systemd file to ~/.config/systemd/user/container-$CONTAINER_NAME.service"
-export XDG_RUNTIME_DIR="/run/user/$UID"
-export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
-systemctl --user daemon-reload
-systemctl --user enable container-$CONTAINER_NAME.service
-#systemctl --user restart container-$CONTAINER_NAME.service
+    echo "Creating systemd file to /home/$PODMAN_USERNAME/.config/systemd/user/container-$CONTAINER_NAME.service"
+    podman generate systemd  -t 5 -n $CONTAINER_NAME > /home/$PODMAN_USERNAME/.config/systemd/user/container-$CONTAINER_NAME.service
+    echo "Copied systemd file to /home/$PODMAN_USERNAME/.config/systemd/user/container-$CONTAINER_NAME.service"
+    export XDG_RUNTIME_DIR="/run/user/$UID"
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
+    systemctl --user daemon-reload
+    systemctl --user enable container-$CONTAINER_NAME.service
+    #systemctl --user restart container-$CONTAINER_NAME.service
 EOF
 
 sudo loginctl enable-linger $(id -un $PODMAN_USER)

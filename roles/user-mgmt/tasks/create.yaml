@@ -1,0 +1,57 @@
+---
+- name: Debug
+  debug:
+    msg: "Starting User Mgmt for {{ user_information }}"
+
+- name: Get group info
+  getent:
+    database: group
+    key: "{{ group_name }}"
+    split: ":"
+  register: groupcheck_result
+  ignore_errors: yes
+
+- name: Debug
+  debug:
+    var: groupcheck_result.failed
+
+- name: Check if we need to fail
+  fail:
+    msg: "We failed because group {{ group_name }} does not exist, and the variable for group_create is {{ group_create }}"
+  when:
+    - groupcheck_result.failed
+    - group_create == "false"
+
+- name: Create Group
+  group:
+    name: "{{ group_name }}"
+    gid: "{{ gid }}"
+  when:
+    - group_create == "true"
+
+- name: Get user info
+  getent:
+    database: passwd
+    key: "{{ user_name }}"
+    split: ":"
+  register: usercheck_result
+  ignore_errors: yes
+
+- name: Debug
+  debug:
+    var: usercheck_result
+
+- name: Check if we need to fail
+  fail:
+    msg: "We failed becasue user {{ user_name }} does not exist, and the variable for user_create is {{ user_create }}"
+  when:
+    - usercheck_result.failed
+    - user_create == "false"
+
+- name: Create user
+  user:
+    name: "{{ user_name }}"
+    group: "{{ group_name }}"
+    uid: "{{ uid }}"
+  when:
+    - user_create == "true"

@@ -1,0 +1,11 @@
+---
+nodexporter_image_location: "quay.io/prometheus/node-exporter:v1.0.1"
+nodexporter_busybox_location: "docker.io/library/busybox"
+nodexporter_podman_user: "1000"
+nodexporter_container_user: "1001"
+nodexporter_exporter_port: "9100"
+nodexporter_container_name: "node-exporter"
+nodexporter_systemd_enable: "true"
+nodexporter_user_create: "true"
+nodexporter_user_name: "node-exporter"
+nodexporter_firewall=: "true"
