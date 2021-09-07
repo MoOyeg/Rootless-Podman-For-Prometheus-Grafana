@@ -104,6 +104,10 @@ fi
 #Create Systemd Start File
 if [ $SYSTEMD_ENABLE == "True" ]
 then
+
+  #Check if systemd folder exists
+  dir_exists "/home/$PODMAN_USERNAME/.config/systemd/user/"
+
   #Enable Systemd Selinux Permissions
   #echo "Please note selinux permissions must be enabled for systemd containers e.g sudo setsebool -P container_manage_cgroup on"
   #if the systemctl --user command  has permissions errors consult https://access.redhat.com/solutions/4661741
