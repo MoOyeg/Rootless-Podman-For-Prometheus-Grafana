@@ -20,12 +20,29 @@ USER_NAME="node-exporter"
 #Enable and Open firewall Service
 FIREWALL="True"
 
-#Script Start
-echo "Will run podman commands as USERNAME:$(id -un $PODMAN_USER) ID:$PODMAN_USER"
+### Functions ####
+#Function to Check if folder exists and try to create it
+dir_exists() {
+  [ -d $1 ] && echo "Directory $1 exists." || ( mkdir -p $1 || ( echo "Error: Directory $1 does not exist or Could not be created."))
+
+  [ ! -d $1 ] && exit 1
+
+}
+
+#Check if Container exists and delete it if it does
+container_exists() {
+  container_id=$(sudo -u \#$PODMAN_USER -H sh -c "podman ps -a --filter \"name=$CONTAINER_NAME\" --quiet")
+  [ -n $container_id ] && (sudo -u \#$PODMAN_USER -H sh -c "podman kill $container_id; podman rm $container_id")
+}
+
+
+####  Script Start #####
+PODMAN_USERNAME=$(id -un $PODMAN_USER)
+echo "Will run podman commands as USERNAME:$PODMAN_USERNAME ID:$PODMAN_USER"
 
 #Get UID Mapping inside Container Process
 echo "Obtaining User Namespace UID Mapping"
-outputline=$(sudo -u \#$PODMAN_USER -H sh -c "podman run -u 1001 busybox cat /proc/self/uid_map | tail -n 1")
+outputline=$(sudo -u \#$PODMAN_USER -H sh -c "podman run -u 1001 $BUSYBOX_LOCATION cat /proc/self/uid_map | tail -n 1")
 outputarray=($outputline)
 uid=$(( $CONTAINER_USER + ${outputarray[1]}-${outputarray[0]} ))
 
@@ -68,10 +85,9 @@ then
 #echo "Please note selinux permissions must be enabled for systemd containers e.g sudo setsebool -P container_manage_cgroup on"
 #if the systemctl --user command 
 sudo -i -u \#$PODMAN_USER bash << EOF
-echo "Creating systemd file to ~/.config/systemd/user/container-$CONTAINER_NAME.service"
-podman generate systemd  -t 5 -n $CONTAINER_NAME > ~/.config/systemd/user/container-$CONTAINER_NAME.service
-echo "Copied systemd file to ~/.config/systemd/user/container-$CONTAINER_NAME.service"
-
+echo "Creating systemd file to /home/$PODMAN_USERNAME/.config/systemd/user/container-$CONTAINER_NAME.service"
+podman generate systemd  -t 5 -n $CONTAINER_NAME > /home/$PODMAN_USERNAME/.config/systemd/user/container-$CONTAINER_NAME.service
+echo "Copied systemd file to /home/$PODMAN_USERNAME/.config/systemd/user/container-$CONTAINER_NAME.service"
 export XDG_RUNTIME_DIR="/run/user/$UID"
 export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
 systemctl --user daemon-reload
