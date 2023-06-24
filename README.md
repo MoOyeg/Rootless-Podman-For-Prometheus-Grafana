@@ -1,6 +1,7 @@
 # Rootless-Podman-For-Prometheus-Grafana
 
-## Contains a set of bash scripts to enable the running and installation of Node Exporter, Prometheus and Grafana as rootless containers for Podman on Fedora 31
+## Status: Not working
+##Contains a set of bash scripts to enable the running and installation of Node Exporter, Prometheus and Grafana as rootless containers for Podman on Fedora 31
 
 ## What do the scripts do
 
